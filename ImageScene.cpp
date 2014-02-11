@@ -1,15 +1,28 @@
 #include "ImageScene.hpp"
 #include <iostream>
+#include <cmath>
 
 void ImageScene::onInitialize () {
 
 }
 
 void ImageScene::onUpdate (float delta) {
+  angle += delta * angleUpdate;
 
+  std::cout << angle << "            " << std::endl;
 }
 
 void ImageScene::onDraw () {
+  auto cang = center.yaw();
+  auto cmod = center.mod();
+  cang += angle;
+
+  auto tx = cmod * cos(cang);
+  auto ty = cmod * sin(cang);
+
+  glTranslated(center.x() - tx, center.y() - ty, 0.d);
+  glRotated(angle * 180 / M_PI, 0.d, 0.d, 1.d);
+
   image.draw();
 }
 
@@ -25,13 +38,18 @@ void ImageScene::onKeyDown (int code) {
     break;
 
     case KEY_S: {
-      //if (image.width() > 0 && image.height() > 0) {
+      if (image.width() > 0 && image.height() > 0) {
         auto fname = select_file_save();
         std::cout << fname << std::endl;
         if (!fname.empty()) {
           image_save(fname, image);
         }
-      //}
+      }
+    }
+    break;
+
+    case KEY_D: {
+      image.desaturate();
     }
     break;
 
@@ -43,5 +61,25 @@ void ImageScene::onKeyDown (int code) {
 }
 
 void ImageScene::onMouseDown (int button) {
+  switch (button) {
+    case MOUSE_LEFT: {
+      angleUpdate = -1.0;
+      center = getMouseWorldPosition();
+    }
+    break;
 
+    case MOUSE_RIGHT: {
+      angleUpdate = 1.0;
+      center = getMouseWorldPosition();
+    }
+    break;
+  }
+}
+
+void ImageScene::onMouseUp (int button) {
+  image.rotate(center, angle);
+
+  angleUpdate = 0.0;
+  angle = 0;
+  center = Vect{0.d, 0.d, 0.d};
 }

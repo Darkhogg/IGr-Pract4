@@ -7,6 +7,8 @@
 class ImageScene : public Scene {
   private:
     Pixbuf image;
+    Vect center;
+    Vect::Component angle, angleUpdate; 
 
   public:
     void onInitialize ();
@@ -14,6 +16,7 @@ class ImageScene : public Scene {
     void onDraw ();
     void onKeyDown (int code);
     void onMouseDown (int button);
+    void onMouseUp (int button);
 
 };
 

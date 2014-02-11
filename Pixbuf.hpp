@@ -1,6 +1,8 @@
 #ifndef __PIXBUF__H__
 #define __PIXBUF__H__
 
+#include "skel/skel.h"
+
 #include <cstddef>
 #include <vector>
 
@@ -37,10 +39,16 @@ class Pixbuf {
     std::size_t width () const { return _width; }
     std::size_t height () const { return _height; }
 
-    void set_size (std::size_t new_width, std::size_t new_height);
+    void resize_canvas (std::size_t new_width, std::size_t new_height);
+    void resize_image  (std::size_t new_width, std::size_t new_height);
+
+    Pixbuf rotated (Vect center, GLdouble angle);
+    void   rotate  (Vect center, GLdouble angle);
 
     pixel  operator() (std::size_t x, std::size_t y) const;
     pixel& operator() (std::size_t x, std::size_t y);
+
+    void desaturate ();
 
     void draw () const;
 };

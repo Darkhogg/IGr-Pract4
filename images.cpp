@@ -16,7 +16,7 @@ std::string select_file_load () {
 }
 
 std::string select_file_save () {
-  return select_file("--save --filename=output.png");
+  return select_file("--save --filename=output.bmp");
 }
 
 
@@ -67,9 +67,6 @@ Pixbuf image_load (std::string fname) {
 
   Pixbuf buf {surf->w, surf->h};
 
-  std::cout << "surface " << surf->w << " x " << surf->h << std::endl;
-  std::cout << "buffer  " << buf.width() << " x " << buf.height() << std::endl;
-
   int bpp = surf->format->BytesPerPixel;
   for (std::size_t i = 0; i < surf->w; ++i) {
     for (std::size_t j = 0; j < surf->h; ++j) {
@@ -80,17 +77,29 @@ Pixbuf image_load (std::string fname) {
 
       SDL_GetRGBA(pixelColor, surf->format, &red, &green, &blue, &alpha);
       buf(i, j) = {red, green, blue, alpha};
-
-      //pixel px = buf(i, j);
-      //std::cout << "(" << i << "," << j << ") :: " << px << std::endl;
     }
   }
 
-  std::cout << " END" << std::endl;
   SDL_FreeSurface(surf);
   return buf;
 }
 
 void image_save (std::string fname, Pixbuf image) {
+  SDL_Surface* surf = SDL_CreateRGBSurface(SDL_SRCALPHA, image.width(), image.height(), 32,
+    RMASK, GMASK, BMASK, AMASK);
 
+
+  for (std::size_t i = 0; i < surf->w; ++i) {
+    for (std::size_t j = 0; j < surf->h; ++j) {
+      pixel px = image(i, j);
+      int color = px.red << 0 | px.green << 8 | px.blue << 16 | px.alpha << 24;
+
+      Uint8 * pixel = (Uint8*)surf->pixels;
+      pixel += (j * surf->pitch) + (i * sizeof(Uint32));
+      *((Uint32*)pixel) = color;
+    }
+  }
+
+  SDL_SaveBMP(surf, fname.c_str());
+  SDL_FreeSurface(surf);
 }
