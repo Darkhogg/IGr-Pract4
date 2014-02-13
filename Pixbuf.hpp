@@ -29,7 +29,10 @@ class Pixbuf {
     std::size_t _width, _height;
     std::vector<pixel> _buffer;
 
-    bool range_check(std::size_t, std::size_t);
+    void range_check(std::size_t, std::size_t) const;
+
+    pixel color_at (int x, int y) const;
+    pixel color_at (double x, double y) const;
 
   public:
     Pixbuf () : Pixbuf(0, 0) {}
@@ -39,10 +42,13 @@ class Pixbuf {
     std::size_t width () const { return _width; }
     std::size_t height () const { return _height; }
 
-    void resize_canvas (std::size_t new_width, std::size_t new_height);
-    void resize_image  (std::size_t new_width, std::size_t new_height);
+    Pixbuf resized_canvas (std::size_t new_width, std::size_t new_height) const;
+    void   resize_canvas  (std::size_t new_width, std::size_t new_height);
 
-    Pixbuf rotated (Vect center, GLdouble angle);
+    Pixbuf resized_image (std::size_t new_width, std::size_t new_height) const;
+    void   resize_image  (std::size_t new_width, std::size_t new_height);
+
+    Pixbuf rotated (Vect center, GLdouble angle) const;
     void   rotate  (Vect center, GLdouble angle);
 
     pixel  operator() (std::size_t x, std::size_t y) const;

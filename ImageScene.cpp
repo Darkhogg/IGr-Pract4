@@ -8,8 +8,6 @@ void ImageScene::onInitialize () {
 
 void ImageScene::onUpdate (float delta) {
   angle += delta * angleUpdate;
-
-  std::cout << angle << "            " << std::endl;
 }
 
 void ImageScene::onDraw () {
@@ -48,6 +46,24 @@ void ImageScene::onKeyDown (int code) {
     }
     break;
 
+    case KEY_R: {
+      double w = width();
+      double h = height();
+      std::cout << "Resize Canvas: " << w << " x " << h << std::endl;
+
+      image.resize_canvas(w, h);
+    }
+    break;
+
+    case KEY_F: {
+      double w = width();
+      double h = height();
+      std::cout << "Resize Image: " << w << " x " << h << std::endl;
+
+      image.resize_image(w, h);
+    }
+    break;
+
     case KEY_D: {
       image.desaturate();
     }
@@ -77,6 +93,7 @@ void ImageScene::onMouseDown (int button) {
 }
 
 void ImageScene::onMouseUp (int button) {
+  std::cout << "Rotate Image: " << angle << " rad around" << center << std::endl;
   image.rotate(center, angle);
 
   angleUpdate = 0.0;
