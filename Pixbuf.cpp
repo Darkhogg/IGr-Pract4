@@ -74,7 +74,7 @@ pixel Pixbuf::color_at (double x, double y) const {
 Pixbuf Pixbuf::rotated (Vect center, GLdouble angle) const {
   Vect c {
     center.x() + _width / 2,
-    center.y() - _height / 2,
+    - center.y() + _height / 2,
     0.0
   };
 
@@ -104,10 +104,10 @@ Pixbuf Pixbuf::resized_canvas (std::size_t new_width, std::size_t new_height) co
 
   for (std::size_t tx = 0; tx < target.width(); ++tx) {
     for (std::size_t ty = 0; ty < target.height(); ++ty) {
-      target(tx, ty) = color_at(
-        (double) tx + (new_width - _width) / 2,
-        (double) ty + (new_height - _height) / 2
-      );
+      int wd2 = ((int) target.width() - (int) _width) / 2;
+      int hd2 = ((int) target.height() - (int) _height) / 2;
+
+      target(tx, ty) = color_at((int) tx - wd2, (int) ty - hd2);
     }
   }
 
