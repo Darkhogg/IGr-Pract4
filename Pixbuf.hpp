@@ -16,7 +16,7 @@ struct pixel {
   pixel () : pixel{0, 0, 0} {}
 
   pixel (color r, color g, color b)
-    : pixel{0, 0, 0, 255} {}
+    : pixel{r, g, b, 255} {}
 
   pixel (color r, color g, color b, color a)
     : red{r}, green{g}, blue{b}, alpha{a} {}

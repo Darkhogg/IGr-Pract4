@@ -4,11 +4,16 @@
 #include "skel/skel.h"
 #include "images.hpp"
 
+#include "PtgTree.hpp"
+
 class ImageScene : public Scene {
   private:
     Pixbuf image;
     Vect center;
     Vect::Component angle, angleUpdate; 
+
+    PtgTree tree;
+    bool ptgmode;
 
   public:
     void onInitialize ();

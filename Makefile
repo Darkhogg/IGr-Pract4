@@ -13,7 +13,7 @@ else
 endif
 
 # object files have corresponding source files
-OBJS= main.o images.o ImageScene.o Pixbuf.o
+OBJS= main.o images.o ImageScene.o Pixbuf.o PtgTree.o PtgSquare.o
 CXX=g++
 ifeq ($(MODE), prod)
 	EXTRA_FLAGS= -O3 -funroll-loops

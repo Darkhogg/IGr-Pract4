@@ -103,3 +103,29 @@ void image_save (std::string fname, Pixbuf image) {
   SDL_SaveBMP(surf, fname.c_str());
   SDL_FreeSurface(surf);
 }
+
+
+Pixbuf fb_load (std::size_t w, std::size_t h) {
+  unsigned char* buf = new unsigned char[3 * w * h];
+
+  glPixelStorei(GL_PACK_ALIGNMENT, 1);
+  glReadPixels(0, 0, w, h, GL_RGB, GL_UNSIGNED_BYTE, buf);
+
+  Pixbuf pb {w, h};
+
+  for (std::size_t x = 0; x < w; ++x) {
+    for (std::size_t y = 0; y < h; ++y) {
+      std::size_t idx = (x + y * w) * 3;
+
+      pixel::color r = buf[idx];
+      pixel::color g = buf[idx + 1];
+      pixel::color b = buf[idx + 2];
+
+      pb(x, h - y - 1) = {r, g, b};
+    }
+  }
+
+  delete[] buf;
+
+  return pb;
+}

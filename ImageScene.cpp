@@ -7,36 +7,49 @@ void ImageScene::onInitialize () {
 }
 
 void ImageScene::onUpdate (float delta) {
-  angle += delta * angleUpdate;
+  if (!ptgmode) {
+    angle += delta * angleUpdate;
+  }
 }
 
 void ImageScene::onDraw () {
-  auto cang = center.yaw();
-  auto cmod = center.mod();
-  cang += angle;
+  if (ptgmode) {
+    tree.draw();
 
-  auto tx = cmod * cos(cang);
-  auto ty = cmod * sin(cang);
+  } else {
+    auto cang = center.yaw();
+    auto cmod = center.mod();
+    cang += angle;
 
-  glTranslated(center.x() - tx, center.y() - ty, 0.d);
-  glRotated(angle * 180 / M_PI, 0.d, 0.d, 1.d);
+    auto tx = cmod * cos(cang);
+    auto ty = cmod * sin(cang);
 
-  image.draw();
+    glTranslated(center.x() - tx, center.y() - ty, 0.d);
+    glRotated(angle * 180 / M_PI, 0.d, 0.d, 1.d);
+
+    image.draw();
+  }
 }
 
 void ImageScene::onKeyDown (int code) {
   switch (code) {
     /* Load an image */
     case KEY_L: {
-      auto fname = select_file_load();
-      if (!fname.empty()) {
-        image = image_load(fname);
+      if (ptgmode) {
+        ptgmode = false;
+        image = fb_load(width(), height());
+
+      } else {
+        auto fname = select_file_load();
+        if (!fname.empty()) {
+          image = image_load(fname);
+        }
       }
     }
     break;
 
     case KEY_S: {
-      if (image.width() > 0 && image.height() > 0) {
+      if (!ptgmode && image.width() > 0 && image.height() > 0) {
         auto fname = select_file_save();
         std::cout << fname << std::endl;
         if (!fname.empty()) {
@@ -61,6 +74,11 @@ void ImageScene::onKeyDown (int code) {
       std::cout << "Resize Image: " << w << " x " << h << std::endl;
 
       image.resize_image(w, h);
+    }
+    break;
+
+    case KEY_P: {
+      ptgmode = true;
     }
     break;
 

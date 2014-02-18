@@ -26,4 +26,6 @@ std::string select_file_save ();
 Pixbuf image_load (std::string fname);
 void image_save (std::string fname, Pixbuf image);
 
+Pixbuf fb_load (std::size_t w, std::size_t h);
+
 #endif
