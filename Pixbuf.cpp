@@ -49,10 +49,10 @@ pixel Pixbuf::color_at (double x, double y) const {
   auto wy = y - ty;
 
   std::array<double, 4> ws {
-    ((1 - wx) + (1 - wy)) * 0.25,
-    ((1 - wx) +      wy ) * 0.25,
-    (     wx  + (1 - wy)) * 0.25,
-    (     wx  +      wy ) * 0.25
+    ((1 - wx) * (1 - wy)),
+    ((1 - wx) *      wy ),
+    (     wx  * (1 - wy)),
+    (     wx  *      wy )
   };
 
   double r, g, b, a;
@@ -60,10 +60,10 @@ pixel Pixbuf::color_at (double x, double y) const {
     pixel px = pxs[i];
     double w = ws[i];
 
-    r += w * px.red;
-    g += w * px.green;
-    b += w * px.blue;
-    a += w * px.alpha;
+    r += (w * px.red) / 1;
+    g += (w * px.green) / 1;
+    b += (w * px.blue) / 1;
+    a += (w * px.alpha) / 1;
   }
 
   return {(pixel::color) r, (pixel::color) g, (pixel::color) b, (pixel::color) a};
