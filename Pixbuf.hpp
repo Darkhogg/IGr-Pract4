@@ -8,6 +8,11 @@
 
 #include <iostream>
 
+#define GAUSS_STDEV 1.5
+#define GAUSS_RANGE 15
+#define GAUSS_RANGE2 (GAUSS_RANGE * 2 + 1)
+#define GAUSS_SIZE (GAUSS_RANGE2*GAUSS_RANGE2)
+
 struct pixel {
   using color = unsigned char;
 
@@ -34,6 +39,8 @@ class Pixbuf {
     pixel color_at (int x, int y) const;
     pixel color_at (double x, double y) const;
 
+    pixel gaussian_average_at (double stdev, int x, int y) const;
+
   public:
     Pixbuf () : Pixbuf(0, 0) {}
     Pixbuf (std::size_t width, std::size_t height)
@@ -51,10 +58,17 @@ class Pixbuf {
     Pixbuf rotated (Vect center, GLdouble angle) const;
     void   rotate  (Vect center, GLdouble angle);
 
+    Pixbuf mixed (Pixbuf other, GLdouble factor) const;
+    void   mix   (Pixbuf other, GLdouble factor);
+
+    Pixbuf gaussian_smoothed (double stdev) const;
+    void   gaussian_smooth   (double stdev);
+
     pixel  operator() (std::size_t x, std::size_t y) const;
     pixel& operator() (std::size_t x, std::size_t y);
 
     void desaturate ();
+    void diff (Pixbuf other);
 
     void draw () const;
 };

@@ -3,6 +3,8 @@
 #include <iostream>
 #include <array>
 #include <cassert>
+#include <cmath>
+#include <algorithm>
 
 #include "skel/skel.h"
 
@@ -129,6 +131,31 @@ Pixbuf Pixbuf::resized_image (std::size_t new_width, std::size_t new_height) con
   return target;
 }
 
+Pixbuf Pixbuf::mixed (Pixbuf other, GLdouble factor) const {
+  Pixbuf target {_width, _height};
+  Pixbuf otherr = other.resized_image(_width, _height);
+
+  auto f1 = 1 - factor;
+  auto f2 = factor;
+
+  for (std::size_t x = 0; x < target.width(); ++x) {
+    for (std::size_t y = 0; y < target.height(); ++y) {
+      pixel p1 = (*this)(x, y);
+      pixel p2 = otherr(x, y);
+
+      target(x, y) = {
+        (pixel::color) (f1 * p1.red   + f2 * p2.red),
+        (pixel::color) (f1 * p1.green + f2 * p2.green),
+        (pixel::color) (f1 * p1.blue  + f2 * p2.blue),
+        (pixel::color) (f1 * p1.alpha + f2 * p2.alpha)
+      };
+    }
+  }
+
+  return target;
+}
+
+
 
 void Pixbuf::rotate (Vect center, GLdouble angle) {
   (*this) = rotated(center, angle);
@@ -140,6 +167,10 @@ void Pixbuf::resize_canvas (std::size_t new_width, std::size_t new_height) {
 
 void Pixbuf::resize_image (std::size_t new_width, std::size_t new_height) {
   (*this) = resized_image(new_width, new_height);
+}
+
+void Pixbuf::mix (Pixbuf other, GLdouble factor) {
+  (*this) = mixed(other, factor);
 }
 
 
@@ -164,6 +195,72 @@ void Pixbuf::desaturate () {
     pixel::color y = (pixel::color) (0.299 * px.red + 0.586 * px.green + 0.114 * px.blue);
     _buffer[k] = {y, y, y, px.alpha};
   }
+}
+
+
+void Pixbuf::diff (Pixbuf other) {
+  for (std::size_t k = 0; k < _buffer.size(); ++k) {
+    pixel px = _buffer[k];
+    pixel opx = other._buffer[k];
+
+    px.red = (pixel::color) abs((int) px.red - (int) opx.red);
+    px.green = (pixel::color) abs((int) px.green - (int) opx.green);
+    px.blue = (pixel::color) abs((int) px.blue - (int) opx.blue);
+    px.alpha = (pixel::color) abs((int) px.alpha - (int) opx.alpha);
+
+    _buffer[k] = px;
+  }
+}
+
+
+pixel Pixbuf::gaussian_average_at (double stdev, int x, int y) const {
+  // 21*21 = 441
+  double sumw = 0;
+  std::array<double, GAUSS_SIZE> weights;
+  std::array<pixel, GAUSS_SIZE> pixels;
+
+
+  std::size_t idx = 0;
+  for (int tx = x - GAUSS_RANGE; tx <= x + GAUSS_RANGE; ++tx) {
+    for (int ty = y - GAUSS_RANGE; ty <= y + GAUSS_RANGE; ++ty) {
+      auto dx = x - tx;
+      auto dy = y - ty;
+      double w = exp(-((dx * dx + dy * dy) / (2 * stdev * stdev)));
+
+      pixels[idx] = color_at(tx, ty);
+      weights[idx] = w;
+
+      sumw += w;
+      ++idx;
+    }
+  }
+
+  double r = 0, g = 0, b = 0, a = 0;
+  for (std::size_t i = 0; i < GAUSS_SIZE; ++i) {
+    r += pixels[i].red * weights[i] / sumw;
+    g += pixels[i].green * weights[i] / sumw;
+    b += pixels[i].blue * weights[i] / sumw;
+    a += pixels[i].alpha * weights[i] / sumw;
+  }
+
+  return {(pixel::color) r, (pixel::color) g, (pixel::color) b, (pixel::color) a};
+}
+
+Pixbuf Pixbuf::gaussian_smoothed (double stdev) const {
+  Pixbuf target {_width, _height};
+
+  for (std::size_t x = 0; x < target.width(); ++x) {
+    for (std::size_t y = 0; y < target.height(); ++y) {
+      target(x, y) = gaussian_average_at(stdev, (int) x, (int) y);
+    }
+  }
+
+  return target;
+}
+
+
+void Pixbuf::gaussian_smooth (double stdev) {
+  (*this) = gaussian_smoothed(stdev);
 }
 
 std::ostream& operator<< (std::ostream& s, const pixel px) {

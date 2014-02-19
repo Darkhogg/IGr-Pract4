@@ -23,6 +23,8 @@
 std::string select_file_load ();
 std::string select_file_save ();
 
+double select_factor ();
+
 Pixbuf image_load (std::string fname);
 void image_save (std::string fname, Pixbuf image);
 

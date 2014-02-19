@@ -1,6 +1,7 @@
 #include "images.hpp"
 
 #include <iostream>
+#include <sstream>
 #include <stdio.h>
 #include <unistd.h>
 
@@ -12,11 +13,11 @@ std::string select_file (std::string options);
 
 
 std::string select_file_load () {
-  return select_file("");
+  return select_file(" 2>/dev/null");
 }
 
 std::string select_file_save () {
-  return select_file("--save --filename=output.bmp");
+  return select_file("--save --filename=output.bmp 2>/dev/null");
 }
 
 
@@ -37,9 +38,12 @@ std::string select_file (std::string options) {
     if (code == 0) {
       return result.substr(0, result.size() - 1);
 
-    } else if (code == 1) {
+    } else if (code == 256) {
       return "";
     }
+
+
+    std::cout << "Zenity returned error " << code << std::endl;
   }
 
   /* 2: Check for stdin TTY */
@@ -56,6 +60,44 @@ std::string select_file (std::string options) {
   return std::string{"./image.png"};
 }
 
+
+GLdouble select_factor () {
+  /* 1: Check for Zenity */
+  FILE* pipe = popen("zenity --scale --text=\"Select factor\\n  LEFT: Original image\\n  RIGHT: Loaded image\" --value=128 --hide-value --min-value=0 --max-value=255 2>/dev/null", "r");
+  if (pipe) {
+    char buffer[16];
+    std::string result = "";
+
+    while (!feof(pipe)) {
+      if (fgets(buffer, 16, pipe) != NULL) {
+        result += buffer;
+      }
+    }
+
+    int code = pclose(pipe);
+    if (code == 0) {
+      std::istringstream iss(result);
+      int i; iss >> i;
+      return i / 255.f;
+
+    } else if (code == 1) {
+      return 0.5;
+    }
+  }
+
+  /* 2: Check for stdin TTY */
+  if (isatty(fileno(stdin))) {
+    std::cout << "Write a factor (float between 0 and 1): " << std::flush;
+
+    double factor;
+    std::cin >> factor;
+
+    return factor;
+  }
+
+  /* 3: Return default factor */
+  return 0.5;
+}
 
 
 Pixbuf image_load (std::string fname) {
