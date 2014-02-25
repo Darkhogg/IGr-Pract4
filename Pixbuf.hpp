@@ -34,7 +34,6 @@ class Pixbuf {
     std::size_t _width, _height;
     std::vector<pixel> _buffer;
 
-    std::size_t _txmin, _txmax, _tymin, _tymax;
     GLuint _texid;
 
     void range_check(std::size_t, std::size_t) const;
@@ -50,8 +49,7 @@ class Pixbuf {
   public:
     Pixbuf () : Pixbuf(0, 0) {}
     Pixbuf (std::size_t width, std::size_t height)
-      : _width{width}, _height{height}, _buffer{width * height}, _texid{0},
-        _txmin{0}, _txmax{width}, _tymin{0}, _tymax{height}
+      : _width{width}, _height{height}, _buffer{width * height}, _texid{0}
       {}
     ~Pixbuf () {
       invalidate_texture();

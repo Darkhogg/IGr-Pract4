@@ -21,12 +21,7 @@ pixel Pixbuf::operator() (std::size_t x, std::size_t y) const {
 
 pixel& Pixbuf::operator() (std::size_t x, std::size_t y) {
   range_check(x, y);
-
-  _txmin = std::min(_txmin, x);
-  _txmax = std::max(_txmax, x + 1);
-  _tymin = std::min(_tymin, y);
-  _tymax = std::max(_tymax, y + 1);
-
+  invalidate_texture();
   return _buffer[x + y * _width];
 }
 
@@ -166,18 +161,22 @@ Pixbuf Pixbuf::mixed (Pixbuf other, GLdouble factor) const {
 
 void Pixbuf::rotate (Vect center, GLdouble angle) {
   (*this) = rotated(center, angle);
+  invalidate_texture();
 }
 
 void Pixbuf::resize_canvas (std::size_t new_width, std::size_t new_height) {
   (*this) = resized_canvas(new_width, new_height);
+  invalidate_texture();
 }
 
 void Pixbuf::resize_image (std::size_t new_width, std::size_t new_height) {
   (*this) = resized_image(new_width, new_height);
+  invalidate_texture();
 }
 
 void Pixbuf::mix (Pixbuf other, GLdouble factor) {
   (*this) = mixed(other, factor);
+  invalidate_texture();
 }
 
 
@@ -239,6 +238,8 @@ void Pixbuf::add_sobel () {
       (*this)(x, y) = op;
     }
   }
+
+  invalidate_texture();
 }
 
 
@@ -248,6 +249,8 @@ void Pixbuf::desaturate () {
     pixel::color y = (pixel::color) (0.299 * px.red + 0.586 * px.green + 0.114 * px.blue);
     _buffer[k] = {y, y, y, px.alpha};
   }
+
+  invalidate_texture();
 }
 
 
@@ -263,6 +266,8 @@ void Pixbuf::diff (Pixbuf other) {
 
     _buffer[k] = px;
   }
+
+  invalidate_texture();
 }
 
 
@@ -314,6 +319,7 @@ Pixbuf Pixbuf::gaussian_smoothed (double stdev) const {
 
 void Pixbuf::gaussian_smooth (double stdev) {
   (*this) = gaussian_smoothed(stdev);
+  invalidate_texture();
 }
 
 std::ostream& operator<< (std::ostream& s, const pixel px) {
@@ -363,16 +369,14 @@ void Pixbuf::update_texture () {
     // the texture wraps over at the edges (repeat)
     glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
     glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
-  }
 
-  if (_txmin < _txmax && _tymin < _tymax) {
     std::cout << "[UPDTEX:" << _texid << "] " << std::endl;
 
     std::vector<unsigned char> dat {};
 
     for (std::size_t y = 0; y < _height; ++y) {
       for (std::size_t x = 0; x < _width; ++x) {
-        pixel px = (*this)(x, y);
+        pixel px = color_at((int) x, (int) y);
 
         std::size_t i = 3 * (x + y * _width); 
 
@@ -384,19 +388,13 @@ void Pixbuf::update_texture () {
 
     glBindTexture( GL_TEXTURE_2D, _texid );
     gluBuild2DMipmaps( GL_TEXTURE_2D, 3, _width, _height, GL_RGB, GL_UNSIGNED_BYTE, dat.data() );
-
-    _txmin = _txmax;
   }
 }
 
 void Pixbuf::invalidate_texture () {
-  if (_texid != 0) {
+  if (_texid > 0) {
     std::cout << "[DELTEX:" << _texid << "]" << std::endl;
     glDeleteTextures( 1, &_texid );
+    _texid = 0;
   }
-
-  _txmin = 0;
-  _txmax = _width;
-  _tymin = 0;
-  _tymax = _height;
 }
