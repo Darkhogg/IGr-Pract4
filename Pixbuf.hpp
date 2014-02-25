@@ -64,6 +64,9 @@ class Pixbuf {
     Pixbuf gaussian_smoothed (double stdev) const;
     void   gaussian_smooth   (double stdev);
 
+    Pixbuf sobel () const;
+    void   add_sobel ();
+
     pixel  operator() (std::size_t x, std::size_t y) const;
     pixel& operator() (std::size_t x, std::size_t y);
 

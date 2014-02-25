@@ -174,6 +174,67 @@ void Pixbuf::mix (Pixbuf other, GLdouble factor) {
 }
 
 
+Pixbuf Pixbuf::sobel () const {
+  // Target pixbuf to return
+  Pixbuf target {_width, _height};
+
+  // Original desaturated buffer
+  Pixbuf orig {*this};
+  orig.desaturate();
+
+
+  for (std::size_t x = 0; x < _width; ++x) {
+    for (std::size_t y = 0; y < _height; ++y) {
+      int z1 = (int) orig.color_at((int) x - 1, (int) y - 1).red;
+      int z2 = (int) orig.color_at((int) x    , (int) y - 1).red;
+      int z3 = (int) orig.color_at((int) x + 1, (int) y - 1).red;
+      int z4 = (int) orig.color_at((int) x - 1, (int) y    ).red;
+      int z5 = (int) orig.color_at((int) x    , (int) y    ).red;
+      int z6 = (int) orig.color_at((int) x + 1, (int) y    ).red;
+      int z7 = (int) orig.color_at((int) x - 1, (int) y + 1).red;
+      int z8 = (int) orig.color_at((int) x    , (int) y + 1).red;
+      int z9 = (int) orig.color_at((int) x + 1, (int) y + 1).red;
+
+      int gx = (z1 + 2 * z4 + z7) - (z3 + 2 * z6 + z9);
+      int gy = (z7 + 2 * z8 + z9) - (z1 + 2 * z2 + z3);
+
+      int g = abs(gx) + abs(gy);
+      pixel::color v = (pixel::color)
+        ( g < 100 ? 0
+        : g < 800 ? ((g - 100) * 255) / 700
+        : 255
+      ); 
+
+      target(x, y) = {v, v, v};
+    }
+  }
+
+  // Return the buffer
+  return target;
+}
+
+void Pixbuf::add_sobel () {
+  Pixbuf sbl = sobel();
+
+  for (std::size_t x = 0; x < _width; ++x) {
+    for (std::size_t y = 0; y < _height; ++y) {
+      pixel sp = sbl(x, y);
+      pixel op = (*this)(x, y);
+
+      op.red = op.red / 3;
+      op.green = op.green / 3;
+      op.blue = op.blue / 3;
+
+      op.red   = op.red   + ((sp.red   - op.red)   * sp.red) / 255;
+      op.green = op.green + ((sp.green - op.green) * sp.red) / 255;
+      op.blue  = op.blue  + ((sp.blue  - op.blue)  * sp.red) / 255;
+
+      (*this)(x, y) = op;
+    }
+  }
+}
+
+
 void Pixbuf::draw () const {
   GLint w2 = - _width / 2;
   GLint h2 = _height / 2;

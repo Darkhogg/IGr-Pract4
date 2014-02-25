@@ -11,6 +11,7 @@ class ImageScene : public Scene {
     Pixbuf image;
     Vect center;
     Vect::Component angle, angleUpdate; 
+    std::string last_loaded;
 
     PtgTree tree;
     bool ptgmode;

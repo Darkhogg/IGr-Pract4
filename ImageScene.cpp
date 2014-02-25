@@ -3,7 +3,7 @@
 #include <cmath>
 
 void ImageScene::onInitialize () {
-
+  last_loaded = "";
 }
 
 void ImageScene::onUpdate (float delta) {
@@ -48,7 +48,17 @@ void ImageScene::onKeyDown (int code) {
           std::cout << "Loading Image '" << fname << "'... " << std::flush;
           image = image_load(fname);
           std::cout << "OK" << std::endl;
+          last_loaded = fname;
         }
+      }
+    }
+    break;
+
+    case KEY_K: {
+      if (!last_loaded.empty()) {
+        std::cout << "Loading Image '" << last_loaded << "'... " << std::flush;
+        image = image_load(last_loaded);
+        std::cout << "OK" << std::endl;
       }
     }
     break;
@@ -154,6 +164,20 @@ void ImageScene::onKeyDown (int code) {
     case KEY_D: {
       std::cout << "Desaturating... " << std::flush;
       image.desaturate();
+      std::cout << "OK" << std::endl;
+    }
+    break;
+
+    case KEY_I: {
+      std::cout << "Applying Sobel... " << std::flush;
+      image = image.sobel();
+      std::cout << "OK" << std::endl;
+    }
+    break;
+
+    case KEY_O: {
+      std::cout << "Applying Sobel Over Image... " << std::flush;
+      image.add_sobel();
       std::cout << "OK" << std::endl;
     }
     break;
