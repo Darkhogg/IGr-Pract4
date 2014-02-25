@@ -34,6 +34,9 @@ class Pixbuf {
     std::size_t _width, _height;
     std::vector<pixel> _buffer;
 
+    std::size_t _txmin, _txmax, _tymin, _tymax;
+    GLuint _texid;
+
     void range_check(std::size_t, std::size_t) const;
 
     pixel color_at (int x, int y) const;
@@ -41,10 +44,18 @@ class Pixbuf {
 
     pixel gaussian_average_at (double stdev, int x, int y) const;
 
+    void update_texture ();
+    void invalidate_texture ();
+
   public:
     Pixbuf () : Pixbuf(0, 0) {}
     Pixbuf (std::size_t width, std::size_t height)
-      : _width{width}, _height{height}, _buffer{width * height} {}
+      : _width{width}, _height{height}, _buffer{width * height}, _texid{0},
+        _txmin{0}, _txmax{width}, _tymin{0}, _tymax{height}
+      {}
+    ~Pixbuf () {
+      invalidate_texture();
+    }
 
     std::size_t width () const { return _width; }
     std::size_t height () const { return _height; }
@@ -73,7 +84,7 @@ class Pixbuf {
     void desaturate ();
     void diff (Pixbuf other);
 
-    void draw () const;
+    void draw ();
 };
 
 

@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <array>
+#include <vector>
 #include <cassert>
 #include <cmath>
 #include <algorithm>
@@ -20,6 +21,12 @@ pixel Pixbuf::operator() (std::size_t x, std::size_t y) const {
 
 pixel& Pixbuf::operator() (std::size_t x, std::size_t y) {
   range_check(x, y);
+
+  _txmin = std::min(_txmin, x);
+  _txmax = std::max(_txmax, x + 1);
+  _tymin = std::min(_tymin, y);
+  _tymax = std::max(_tymax, y + 1);
+
   return _buffer[x + y * _width];
 }
 
@@ -235,21 +242,6 @@ void Pixbuf::add_sobel () {
 }
 
 
-void Pixbuf::draw () const {
-  GLint w2 = - _width / 2;
-  GLint h2 = _height / 2;
-
-  glBegin(GL_POINTS);
-  for (std::size_t i = 0; i < _width; ++i) {
-    for (std::size_t j = 0; j < _height; ++j) {
-      pixel p = (*this)(i, j);
-      glColor3f(p.red / 255.f, p.green / 255.f, p.blue / 255.f);
-      glVertex2i(w2 + i, h2 - j);
-    }
-  }
-  glEnd();
-}
-
 void Pixbuf::desaturate () {
   for (std::size_t k = 0; k < _buffer.size(); ++k) {
     pixel px = _buffer[k];
@@ -331,4 +323,80 @@ std::ostream& operator<< (std::ostream& s, const pixel px) {
     << ", " << (int) px.blue
     << "; " << (int) px.alpha
     << "]";
+}
+
+
+void Pixbuf::draw () {
+  update_texture();
+
+  if (_texid > 0) {
+    glEnable( GL_TEXTURE_2D );
+    glBindTexture( GL_TEXTURE_2D, _texid );
+
+    auto w2 = _width / 2;
+    auto h2 = _height / 2;
+
+    glBegin( GL_QUADS );
+    glTexCoord2d(0.0, 0.0); glVertex2i(-w2, h2);
+    glTexCoord2d(1.0, 0.0); glVertex2i(w2, h2);
+    glTexCoord2d(1.0, 1.0); glVertex2i(w2, -h2);
+    glTexCoord2d(0.0, 1.0); glVertex2i(-w2, -h2);
+    glEnd();
+  }
+}
+
+void Pixbuf::update_texture () {
+  if (_texid == 0 && _width > 0 && _height > 0) {
+    glGenTextures(1, &_texid);
+
+    std::cout << "[GENTEX:" << _texid << "]" << std::endl;
+
+    glBindTexture( GL_TEXTURE_2D, _texid );
+    glTexEnvf( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE );
+
+    // when texture area is small, bilinear filter the closest mipmap
+    glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST );
+
+    // when texture area is large, bilinear filter the original
+    glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+
+    // the texture wraps over at the edges (repeat)
+    glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
+    glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
+  }
+
+  if (_txmin < _txmax && _tymin < _tymax) {
+    std::cout << "[UPDTEX:" << _texid << "] " << std::endl;
+
+    std::vector<unsigned char> dat {};
+
+    for (std::size_t y = 0; y < _height; ++y) {
+      for (std::size_t x = 0; x < _width; ++x) {
+        pixel px = (*this)(x, y);
+
+        std::size_t i = 3 * (x + y * _width); 
+
+        dat.push_back(px.red);
+        dat.push_back(px.green);
+        dat.push_back(px.blue);
+      }
+    }
+
+    glBindTexture( GL_TEXTURE_2D, _texid );
+    gluBuild2DMipmaps( GL_TEXTURE_2D, 3, _width, _height, GL_RGB, GL_UNSIGNED_BYTE, dat.data() );
+
+    _txmin = _txmax;
+  }
+}
+
+void Pixbuf::invalidate_texture () {
+  if (_texid != 0) {
+    std::cout << "[DELTEX:" << _texid << "]" << std::endl;
+    glDeleteTextures( 1, &_texid );
+  }
+
+  _txmin = 0;
+  _txmax = _width;
+  _tymin = 0;
+  _tymax = _height;
 }
